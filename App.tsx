@@ -1,13 +1,13 @@
 import {
-    Urbanist_100Thin,
-    Urbanist_200ExtraLight,
-    Urbanist_300Light,
-    Urbanist_400Regular,
-    Urbanist_500Medium,
-    Urbanist_600SemiBold,
-    Urbanist_700Bold,
-    Urbanist_800ExtraBold,
-    Urbanist_900Black,
+  Urbanist_100Thin,
+  Urbanist_200ExtraLight,
+  Urbanist_300Light,
+  Urbanist_400Regular,
+  Urbanist_500Medium,
+  Urbanist_600SemiBold,
+  Urbanist_700Bold,
+  Urbanist_800ExtraBold,
+  Urbanist_900Black,
 } from '@expo-google-fonts/urbanist';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -25,7 +25,7 @@ export default function App() {
   const colorScheme = useColorScheme();
   const { loadNotifications } = useNotificationStore();
   
-  // Inicializa el hook de notificaciones en el nivel raíz
+  // Hook de notificaciones en nivel raíz
   useNotifications();
   
   const [loaded] = useFonts({
@@ -41,10 +41,9 @@ export default function App() {
     Urbanist_900Black,
   });
 
-  // Inicializar notificaciones cuando las fuentes estén listas
+  // Inicializar cuando las fuentes estén listas
   useEffect(() => {
     if (loaded) {
-      console.log('🚀 Inicializando app...');
       loadNotifications();
     }
   }, [loaded, loadNotifications]);

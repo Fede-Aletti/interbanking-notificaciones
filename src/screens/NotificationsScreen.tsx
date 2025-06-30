@@ -6,13 +6,13 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import {
-    FlatList,
-    Platform,
-    RefreshControl,
-    StatusBar,
-    StyleSheet,
-    TouchableOpacity,
-    View
+  FlatList,
+  Platform,
+  RefreshControl,
+  StatusBar,
+  StyleSheet,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -38,7 +38,7 @@ const NotificationsScreen = () => {
     try {
       await refreshNotifications();
     } catch (error) {
-      console.error('Error refreshing notifications:', error);
+      // Silenciar errores de refresh
     } finally {
       setRefreshing(false);
     }
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
       android: 14,
     }),
   },
-  // Estilos del banner de notificaciones nuevas
+  // Banner de nuevas notificaciones
   newNotificationsBanner: {
     marginHorizontal: 0,
     marginBottom: 16,

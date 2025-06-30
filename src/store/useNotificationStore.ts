@@ -2,7 +2,7 @@ import { Notification, NotificationStore, NotificationType } from '@/types/notif
 import * as Notifications from 'expo-notifications';
 import { create } from 'zustand';
 
-// Mock notifications for demo - se cargan siempre al inicializar
+// Datos iniciales para demo
 const mockNotifications: Notification[] = [
   {
     id: '1',
@@ -50,20 +50,20 @@ interface ExtendedNotificationStore extends NotificationStore {
   isLoaded: boolean;
   hasNewNotificationsAvailable: boolean;
   lastRefreshTime: Date | null;
-  pendingServerNotifications: Notification[]; // Notificaciones del servidor pendientes
-  checkingInterval: NodeJS.Timeout | null; // Timer para verificación automática
-  autoNotificationsInterval: NodeJS.Timeout | null; // Timer para notificaciones automáticas
+  pendingServerNotifications: Notification[];
+  checkingInterval: NodeJS.Timeout | null;
+  autoNotificationsInterval: NodeJS.Timeout | null;
   loadNotifications: () => void;
   checkForMissedNotifications: () => Promise<void>;
   checkForNewNotifications: () => Promise<boolean>;
   refreshNotifications: () => Promise<void>;
   dismissNewNotificationsBanner: () => void;
-  simulateServerNotification: () => void; // Nueva función para simular notificaciones del servidor
-  startAutoChecking: () => void; // Iniciar verificación automática
-  stopAutoChecking: () => void; // Detener verificación automática
-  addProgrammedNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => void; // Para notificaciones programadas
-  startAutoNotifications: () => void; // Iniciar notificaciones automáticas
-  stopAutoNotifications: () => void; // Detener notificaciones automáticas
+  simulateServerNotification: () => void;
+  startAutoChecking: () => void;
+  stopAutoChecking: () => void;
+  addProgrammedNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => void;
+  startAutoNotifications: () => void;
+  stopAutoNotifications: () => void;
 }
 
 export const useNotificationStore = create<ExtendedNotificationStore>((set, get) => {
@@ -77,50 +77,38 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
     checkingInterval: null,
     autoNotificationsInterval: null,
 
-    // Iniciar verificación automática cada 10 segundos
+    // Auto-verificación cada 10 segundos
     startAutoChecking: () => {
       const currentState = get();
       
-      // Si ya hay un timer activo, no crear otro
       if (currentState.checkingInterval) {
-        console.log('⏰ Auto-checking ya está activo');
         return;
       }
       
       const interval = setInterval(() => {
-        console.log('🔍 Auto-checking: Verificando nuevas notificaciones...');
         const state = get();
         if (state.pendingServerNotifications.length > 0 && !state.hasNewNotificationsAvailable) {
           set({ hasNewNotificationsAvailable: true });
-          console.log('📬 Auto-checking: Nuevas notificaciones disponibles');
         }
-      }, 10000); // Cada 10 segundos
+      }, 10000);
       
       set({ checkingInterval: interval });
-      console.log('⏰ Auto-checking iniciado (cada 10 segundos)');
     },
 
-    // Detener verificación automática
     stopAutoChecking: () => {
       const currentState = get();
       if (currentState.checkingInterval) {
         clearInterval(currentState.checkingInterval);
         set({ checkingInterval: null });
-        console.log('⏹️ Auto-checking detenido');
       }
     },
 
-    // Verificar notificaciones que llegaron en background
+    // Revisar notificaciones perdidas del background
     checkForMissedNotifications: async () => {
       try {
-        console.log('🔍 Verificando notificaciones presentadas...');
-        
-        // Obtener notificaciones que están actualmente en la bandeja de notificaciones
         const presentedNotifications = await Notifications.getPresentedNotificationsAsync();
         
         if (presentedNotifications.length > 0) {
-          console.log(`📥 Encontradas ${presentedNotifications.length} notificaciones presentadas`);
-          
           const currentState = get();
           let addedCount = 0;
           
@@ -128,7 +116,7 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
             const { title, body, data } = notification.request.content;
             const identifier = notification.request.identifier;
             
-            // Mejorar verificación de duplicados - usar identifier si está disponible
+            // Verificar duplicados por identifier o título/tiempo
             const existsInMain = currentState.notifications.some(n => 
               (data?.identifier && n.data?.identifier === data.identifier) ||
               (n.title === title && Math.abs(n.timestamp.getTime() - notification.date) < 3000)
@@ -140,8 +128,6 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
             );
             
             if (!existsInMain && !existsInPending) {
-              console.log('➕ Agregando notificación perdida:', title);
-              
               const newNotification: Notification = {
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
                 title: title || 'Nueva Notificación',
@@ -153,49 +139,39 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
                 data: data ? { ...data, identifier } : { identifier },
               };
 
-              // Las notificaciones perdidas del background van DIRECTAMENTE al listado principal
+              // Las notificaciones perdidas van directo al listado
               set((state) => ({
                 notifications: [newNotification, ...state.notifications],
                 unreadCount: state.unreadCount + 1,
               }));
               
               addedCount++;
-            } else {
-              console.log('⚠️ Notificación ya existe, saltando:', title);
             }
           }
           
+          // Limpiar notificaciones del sistema
           if (addedCount > 0) {
-            console.log(`✅ Se agregaron ${addedCount} notificaciones perdidas al listado principal`);
+            try {
+              await Notifications.dismissAllNotificationsAsync();
+            } catch (error) {
+              // Silenciar error de limpieza
+            }
           }
-          
-          // Limpiar notificaciones procesadas de la bandeja del sistema
-          try {
-            await Notifications.dismissAllNotificationsAsync();
-            console.log('🧹 Notificaciones presentadas limpiadas');
-          } catch (error) {
-            console.warn('⚠️ No se pudieron limpiar las notificaciones presentadas:', error);
-          }
-        } else {
-          console.log('📭 No hay notificaciones presentadas');
         }
         
       } catch (error) {
-        console.error('❌ Error checking missed notifications:', error);
+        // Silenciar errores de verificación
       }
     },
 
-    // Cargar notificaciones (ahora solo datos mock)
+    // Cargar datos iniciales
     loadNotifications: () => {
       const currentState = get();
       
-      // Evitar cargar múltiples veces
       if (currentState.isLoaded) {
-        console.log('⚠️ Notificaciones ya están cargadas, saltando...');
         return;
       }
       
-      console.log('🔄 Cargando notificaciones mock...');
       const unreadCount = mockNotifications.filter(n => !n.isRead).length;
       
       set({
@@ -205,14 +181,10 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
         lastRefreshTime: new Date(),
       });
       
-      console.log('✅ Notificaciones mock cargadas:', mockNotifications.length);
-      
-      // Verificar notificaciones perdidas solo una vez
+      // Iniciar verificaciones automáticas
       setTimeout(() => {
         get().checkForMissedNotifications();
-        // Iniciar auto-checking solo una vez
         get().startAutoChecking();
-        // Iniciar notificaciones automáticas
         get().startAutoNotifications();
       }, 1000);
     },
@@ -229,13 +201,10 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
         notifications: [newNotification, ...state.notifications],
         unreadCount: state.unreadCount + 1,
       }));
-
-      console.log('✅ Notificación agregada:', newNotification.title);
     },
 
-    // Nueva función específica para notificaciones programadas
+    // Para notificaciones programadas (van a pending)
     addProgrammedNotification: (notification) => {
-      // Verificar si ya existe usando el identificador único
       const currentState = get();
       const identifier = notification.data?.identifier;
       
@@ -249,12 +218,11 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
         );
         
         if (existsInMain || existsInPending) {
-          console.log('⚠️ Notificación programada ya existe, saltando:', notification.title);
           return;
         }
       }
       
-      // Usar el timestamp programado si está disponible, sino la fecha actual
+      // Usar timestamp programado o actual
       const scheduledTimestamp = notification.data?.scheduledFor || 
                                 notification.data?.originalTimestamp || 
                                 Date.now();
@@ -262,17 +230,14 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
       const newNotification: Notification = {
         ...notification,
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        timestamp: new Date(scheduledTimestamp), // Usar timestamp correcto
+        timestamp: new Date(scheduledTimestamp),
         isRead: false,
       };
 
-      // Las notificaciones programadas van a pending para requerir pull-to-refresh
       set((state) => ({
         pendingServerNotifications: [...state.pendingServerNotifications, newNotification],
         hasNewNotificationsAvailable: true,
       }));
-
-      console.log('✅ Notificación programada agregada a pending:', newNotification.title, 'con timestamp:', newNotification.timestamp);
     },
 
     markAsRead: async (id) => {
@@ -290,8 +255,6 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
           unreadCount,
         };
       });
-
-      console.log('📖 Notificación marcada como leída:', id);
     },
 
     markAllAsRead: async () => {
@@ -302,8 +265,6 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
         })),
         unreadCount: 0,
       }));
-
-      console.log('📖 Todas las notificaciones marcadas como leídas');
     },
 
     deleteNotification: async (id) => {
@@ -318,8 +279,6 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
           unreadCount,
         };
       });
-
-      console.log('🗑️ Notificación eliminada:', id);
     },
 
     clearAllNotifications: async () => {
@@ -327,75 +286,59 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
         notifications: [],
         unreadCount: 0,
       });
-
-      console.log('🧹 Todas las notificaciones limpiadas');
     },
 
-    // Verificar si hay notificaciones pendientes del servidor
     checkForNewNotifications: async () => {
       try {
         const currentState = get();
         
-        // Solo mostrar el banner si hay notificaciones pendientes y no está ya mostrado
         if (currentState.pendingServerNotifications.length > 0 && !currentState.hasNewNotificationsAvailable) {
           set(state => ({
             hasNewNotificationsAvailable: true,
           }));
-          console.log('📬 Nuevas notificaciones del servidor disponibles');
           return true;
         }
         
         return false;
       } catch (error) {
-        console.error('❌ Error checking for new notifications:', error);
         return false;
       }
     },
 
-    // Refrescar notificaciones (solo por pull-to-refresh)
+    // Pull-to-refresh: mover pending a main
     refreshNotifications: async () => {
       try {
-        console.log('🔄 Refrescando notificaciones...');
-        
         const currentState = get();
         
-        // Agregar las notificaciones pendientes del servidor
         if (currentState.pendingServerNotifications.length > 0) {
           const newNotifications = currentState.pendingServerNotifications;
           
-          // Agregar las nuevas notificaciones al estado y limpiar las pendientes
           set(state => ({
             notifications: [...newNotifications, ...state.notifications],
             unreadCount: state.unreadCount + newNotifications.length,
             hasNewNotificationsAvailable: false,
             lastRefreshTime: new Date(),
-            pendingServerNotifications: [], // Limpiar las pendientes
+            pendingServerNotifications: [],
           }));
-          
-          console.log(`✅ Se agregaron ${newNotifications.length} notificaciones del servidor`);
         } else {
-          // Solo actualizar el timestamp de refresh
           set(state => ({
             lastRefreshTime: new Date(),
             hasNewNotificationsAvailable: false,
           }));
-          console.log('✅ Lista actualizada - no hay notificaciones nuevas');
         }
         
       } catch (error) {
-        console.error('❌ Error refreshing notifications:', error);
+        // Silenciar errores
       }
     },
 
-    // Cerrar el banner de notificaciones nuevas
     dismissNewNotificationsBanner: () => {
       set(state => ({
         hasNewNotificationsAvailable: false,
       }));
-      console.log('❌ Banner de notificaciones nuevas cerrado');
     },
 
-    // Simular notificaciones del servidor (no aparecen hasta pull-to-refresh)
+    // Simular notificación del servidor
     simulateServerNotification: () => {
       const types: NotificationType[] = ['security', 'transaction', 'promotion', 'system', 'urgent'];
       const randomType = types[Math.floor(Math.random() * types.length)];
@@ -440,30 +383,25 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
         data: { fromServer: true, timestamp: Date.now() },
       };
       
-      // Agregar a notificaciones pendientes del servidor (no visible hasta refresh)
       set(state => ({
         pendingServerNotifications: [...state.pendingServerNotifications, newServerNotification],
         hasNewNotificationsAvailable: true,
       }));
-      
-      console.log('📨 Notificación del servidor simulada (pendiente de refresh):', template.title);
     },
 
+    // Auto-generar notificaciones cada 15 segundos
     startAutoNotifications: () => {
       const currentState = get();
       
       if (currentState.autoNotificationsInterval) {
-        console.log('⏰ Auto-notifications ya está activo');
         return;
       }
       
       const interval = setInterval(() => {
-        console.log('🔍 Auto-notifications: Simulando notificaciones automáticas...');
         get().simulateServerNotification();
-      }, 15000); // Cada 15 segundos
+      }, 15000);
       
       set({ autoNotificationsInterval: interval });
-      console.log('⏰ Auto-notifications iniciado (cada 15 segundos)');
     },
 
     stopAutoNotifications: () => {
@@ -471,7 +409,6 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
       if (currentState.autoNotificationsInterval) {
         clearInterval(currentState.autoNotificationsInterval);
         set({ autoNotificationsInterval: null });
-        console.log('⏹️ Auto-notifications detenido');
       }
     },
   };

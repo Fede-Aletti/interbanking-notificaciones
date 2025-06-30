@@ -4,12 +4,12 @@ import { useNotificationStore } from '@/store/useNotificationStore';
 import { NotificationType, notificationColors, notificationIcons } from '@/types/notifications';
 import React from 'react';
 import {
-    Alert,
-    Platform,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    View,
+  Alert,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   globalButton: {
     marginBottom: 12,
   },
-  // Estilos para notificaciones del servidor
+  // Notificaciones del servidor
   serverNotificationCard: {
     marginBottom: 16,
   },

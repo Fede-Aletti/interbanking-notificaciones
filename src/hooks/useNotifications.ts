@@ -5,7 +5,7 @@ import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
 
-// Configurar el comportamiento de las notificaciones
+// Configuración de notificaciones
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -31,37 +31,29 @@ export const useNotifications = () => {
   const isInitialized = useRef(false);
 
   useEffect(() => {
-    // Evitar múltiples inicializaciones
+    // Evitar inicializaciones múltiples
     if (isInitialized.current) {
-      console.log('⚠️ Hook ya está inicializado, saltando...');
       return;
     }
     
     isInitialized.current = true;
-    console.log('🚀 Inicializando hook de notificaciones...');
-    
     registerForPushNotificationsAsync();
 
     // Listener para notificaciones recibidas
     notificationListener.current = Notifications.addNotificationReceivedListener(async (notification) => {
-      console.log('📱 Notificación recibida:', notification.request.content.title);
-      
       const { title, body, data } = notification.request.content;
       
       try {
-        // Verificar si es una notificación programada por la data
+        // Las programadas van a pending, las normales al listado principal
         if (data?.isProgrammed) {
-          // Las notificaciones programadas van a pending para requerir pull-to-refresh
           addProgrammedNotification({
             title: title || 'Nueva Notificación',
             description: body || 'Has recibido una nueva notificación',
             type: (data?.type as NotificationType) || 'system',
             priority: (data?.priority as 'low' | 'medium' | 'high') || 'medium',
-            data: { ...data, originalTimestamp: Date.now() }, // Preservar timestamp original
+            data: { ...data, originalTimestamp: Date.now() },
           });
-          console.log('✅ Notificación programada agregada a pending');
         } else {
-          // Las notificaciones push normales van directo al listado
           await addNotification({
             title: title || 'Nueva Notificación',
             description: body || 'Has recibido una nueva notificación',
@@ -69,24 +61,21 @@ export const useNotifications = () => {
             priority: (data?.priority as 'low' | 'medium' | 'high') || 'medium',
             data: data || {},
           });
-          console.log('✅ Notificación push agregada al store');
         }
       } catch (error) {
-        console.error('❌ Error agregando notificación:', error);
+        // Silenciar errores de procesamiento
       }
     });
 
     // Listener para respuestas a notificaciones
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       const notificationData = response.notification.request.content.data;
-      console.log('👆 Notification response:', notificationData);
+      // Aquí se podría manejar navegación específica
     });
 
-    // Listener para cambios de estado de la app
+    // Detectar cuando la app vuelve del background
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        console.log('🔄 App volvió al foreground, verificando notificaciones perdidas...');
-        // Solo verificar si ya están cargadas las notificaciones
         if (isLoaded) {
           checkForMissedNotifications();
         }
@@ -97,7 +86,6 @@ export const useNotifications = () => {
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
-      console.log('🧹 Limpiando hook de notificaciones...');
       if (notificationListener.current) {
         Notifications.removeNotificationSubscription(notificationListener.current);
       }
@@ -106,13 +94,11 @@ export const useNotifications = () => {
       }
       subscription?.remove();
       
-      // Detener auto-checking al desmontar
       stopAutoChecking();
-      // Detener notificaciones automáticas
       stopAutoNotifications();
       isInitialized.current = false;
     };
-  }, []); // Solo dependencias estáticas
+  }, []);
 
   const scheduleNotification = async (
     title: string,
@@ -122,7 +108,7 @@ export const useNotifications = () => {
     delaySeconds: number = 1
   ) => {
     try {
-      // Crear identificador único para la notificación programada
+      // ID único para evitar duplicados
       const uniqueId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
       
       const identifier = await Notifications.scheduleNotificationAsync({
@@ -133,9 +119,9 @@ export const useNotifications = () => {
             type, 
             priority, 
             timestamp: Date.now(),
-            isProgrammed: true, // Marcar como programada
-            scheduledFor: Date.now() + (delaySeconds * 1000), // Cuando debería llegar
-            identifier: uniqueId // Identificador único para evitar duplicados
+            isProgrammed: true,
+            scheduledFor: Date.now() + (delaySeconds * 1000),
+            identifier: uniqueId
           },
           badge: 1,
         },
@@ -144,10 +130,9 @@ export const useNotifications = () => {
           seconds: delaySeconds,
         },
       });
-      console.log('⏰ Notificación programada:', identifier, 'con ID:', uniqueId);
       return identifier;
     } catch (error) {
-      console.error('❌ Error scheduling notification:', error);
+      // Silenciar errores de programación
     }
   };
 
@@ -189,9 +174,8 @@ export const useNotifications = () => {
         priority: notification.priority,
         data: { simulated: true, timestamp: Date.now() },
       });
-      console.log('✅ Notificación simulada agregada');
     } catch (error) {
-      console.error('❌ Error simulating notification:', error);
+      // Silenciar errores de simulación
     }
   };
 
@@ -229,14 +213,11 @@ async function registerForPushNotificationsAsync() {
     
     try {
       token = await Notifications.getExpoPushTokenAsync({
-        projectId: '53bf3907-5c46-4a59-9593-e9a2fd059d11', // Usar el projectId correcto del app.json
+        projectId: '53bf3907-5c46-4a59-9593-e9a2fd059d11',
       });
-      console.log('📱 Expo Push Token:', token?.data);
     } catch (error) {
-      console.log('❌ Error getting push token:', error);
+      // Silenciar errores de token
     }
-  } else {
-    console.log('⚠️ Debe usar un dispositivo físico para las notificaciones push');
   }
 
   return token?.data;
