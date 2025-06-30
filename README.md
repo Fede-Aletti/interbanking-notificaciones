@@ -33,18 +33,11 @@ Un sistema completo de notificaciones push desarrollado en React Native que simu
 ## 🛠️ Decisiones Técnicas
 
 ### **Estado Global con Zustand**
-Elegimos Zustand sobre Context API por su simplicidad y mejor performance:
+Elegí Zustand sobre Context API por su simplicidad y mejor performance:
 - Store minimalista sin boilerplate
 - Subscripciones automáticas optimizadas
 - TypeScript nativo con tipado completo
 - Mejor debugging y developer experience
-
-### **React Navigation vs Expo Router**
-Migración de Expo Router a React Navigation por:
-- **Compatibilidad**: Mayor soporte con notificaciones push
-- **Flexibilidad**: Control total sobre la navegación
-- **Performance**: Mejor manejo de modales y transiciones
-- **Ecosystem**: Más plugins y documentación disponible
 
 ### **Arquitectura de Notificaciones**
 Diseño que simula un sistema real:
@@ -56,7 +49,6 @@ Diseño que simula un sistema real:
 Implementación de múltiples timers controlados:
 - Auto-checking cada 10 segundos para detectar nuevas notificaciones
 - Auto-generación cada 15 segundos para simular actividad del servidor
-- Cleanup automático para evitar memory leaks
 
 ## 📦 Instalación y Configuración
 
@@ -92,11 +84,6 @@ npm run ios
 npm run android
 ```
 
-#### **Web**
-```bash
-npm run web
-```
-
 ### **Testing en Dispositivo Real**
 
 #### **Expo Go (Limitado)**
@@ -104,7 +91,7 @@ npm run web
 # Escanear QR desde Expo Go
 npm start
 ```
-⚠️ **Nota**: Expo Go en SDK 53+ no soporta notificaciones push reales.
+⚠️ **Nota**: Expo Go, en SDK 53+, puede advertir que no se soporta notificaciones push reales.
 
 #### **Development Build (Recomendado)**
 ```bash
@@ -180,39 +167,6 @@ Light: '#6B7280'     // Captions
 - **Badges**: Color-coded con auto-sizing
 - **Typography**: Sistema consistente con line-height optimizado
 
-## 🔧 Configuración Avanzada
-
-### **Notificaciones Push Reales**
-
-#### **Firebase Setup**
-1. Crear proyecto en [Firebase Console](https://console.firebase.google.com/)
-2. Habilitar Cloud Messaging
-3. Descargar configuración:
-   - `google-services.json` (Android)
-   - `GoogleService-Info.plist` (iOS)
-
-#### **Actualizar app.json**
-```json
-{
-  "expo": {
-    "plugins": [
-      ["expo-notifications", {
-        "icon": "./assets/images/icon.png",
-        "color": "#8B5CF6"
-      }],
-      ["@react-native-firebase/app", {
-        "android": {
-          "googleServicesFile": "./google-services.json"
-        },
-        "ios": {
-          "googleServicesFile": "./GoogleService-Info.plist"
-        }
-      }]
-    ]
-  }
-}
-```
-
 ### **Testing Workflow**
 
 #### **Flujo de Testing Completo**
@@ -256,27 +210,13 @@ Light: '#6B7280'     // Captions
 - Prevención de memory leaks en intervalos
 - Gestión eficiente de state updates
 
-## 🧪 Testing
-
-### **Tipos de Notificaciones para Testing**
-```typescript
-// Push inmediato
-simulateNotification('security');
-
-// Programada (5 segundos)
-scheduleNotification('Test', 'Body', 'system', 'medium', 5);
-
-// Del servidor (requiere pull-to-refresh)
-simulateServerNotification();
-```
-
 ### **Escenarios de Testing**
 1. **App en foreground**: Todas las notificaciones funcionan normalmente
 2. **App en background**: Recovery automático al volver
 3. **App cerrada**: Notificaciones aparecen en bandeja del sistema
 4. **Pull-to-refresh**: Sincronización manual de notificaciones del servidor
 
-## 🔮 Próximas Mejoras
+## 🔮 Próximas Posibles Mejoras
 
 - [ ] **Firebase integration**: FCM completo para push reales
 - [ ] **Offline support**: Queue de notificaciones sin conexión
@@ -287,8 +227,8 @@ simulateServerNotification();
 
 ## 📄 Licencia
 
-Este proyecto es parte de un challenge técnico y está disponible para fines educativos.
+Este proyecto es parte de un challenge técnico para interbanking y Sooft.
 
 ---
 
-**Desarrollado con ❤️ usando React Native, Expo y TypeScript**
+**Desarrollado usando React Native, Expo y TypeScript**
