@@ -14,6 +14,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -42,19 +43,21 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen 
-          name="notification-detail" 
-          options={{ 
-            headerShown: false,
-            presentation: 'modal'
-          }} 
-        />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen 
+            name="notification-detail" 
+            options={{ 
+              headerShown: false,
+              presentation: 'modal'
+            }} 
+          />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="dark" backgroundColor="#FFFFFF" />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

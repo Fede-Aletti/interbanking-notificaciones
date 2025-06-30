@@ -5,13 +5,14 @@ import { router } from 'expo-router';
 import React from 'react';
 import {
     FlatList,
+    Platform,
     RefreshControl,
-    SafeAreaView,
     StatusBar,
     StyleSheet,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const NotificationsScreen = () => {
   const { notifications, unreadCount, markAsRead } = useNotificationStore();
@@ -61,7 +62,10 @@ const NotificationsScreen = () => {
                 styles.iconBackground,
                 { backgroundColor: `${notificationColors[item.type]}20` }
               ]}>
-                <Typography style={{ color: notificationColors[item.type], fontSize: 20 }}>
+                <Typography style={[
+                  styles.iconText,
+                  { color: notificationColors[item.type] }
+                ]}>
                   {notificationIcons[item.type]}
                 </Typography>
               </View>
@@ -80,7 +84,7 @@ const NotificationsScreen = () => {
                 >
                   {item.title}
                 </Typography>
-                <Typography variant="caption" color="#9CA3AF">
+                <Typography variant="caption" color="#9CA3AF" style={styles.timeText}>
                   {formatTime(item.timestamp)}
                 </Typography>
               </View>
@@ -111,13 +115,15 @@ const NotificationsScreen = () => {
 
   const ListHeader = () => (
     <View style={styles.header}>
-      <Typography variant="h1" color="#1E293B">
+      <Typography variant="h1" color="#1E293B" style={styles.headerTitle}>
         Notificaciones
       </Typography>
       {unreadCount > 0 && (
-        <Badge variant="danger">
-          {unreadCount}
-        </Badge>
+        <View style={styles.headerBadgeContainer}>
+          <Badge variant="danger">
+            {unreadCount}
+          </Badge>
+        </View>
       )}
     </View>
   );
@@ -135,7 +141,7 @@ const NotificationsScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       <FlatList
@@ -155,7 +161,8 @@ const NotificationsScreen = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.listContainer,
-          notifications.length === 0 && styles.listContainerEmpty
+          notifications.length === 0 && styles.listContainerEmpty,
+          Platform.OS === 'android' && { paddingBottom: 90 }
         ]}
       />
     </SafeAreaView>
@@ -178,8 +185,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 20,
+    paddingVertical: Platform.select({
+      ios: 20,
+      android: 16,
+    }),
     paddingBottom: 16,
+  },
+  headerTitle: {
+    flex: 1,
+  },
+  headerBadgeContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   itemContainer: {
     marginBottom: 12,
@@ -189,11 +206,17 @@ const styles = StyleSheet.create({
   },
   contentRow: {
     flexDirection: 'row',
-    padding: 16,
+    padding: Platform.select({
+      ios: 16,
+      android: 14,
+    }),
+    alignItems: 'flex-start',
   },
   iconContainer: {
     marginRight: 12,
     position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconBackground: {
     width: 48,
@@ -201,6 +224,12 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconText: {
+    fontSize: 20,
+    includeFontPadding: false,
+    textAlign: 'center',
+    textAlignVertical: 'center',
   },
   priorityBadge: {
     position: 'absolute',
@@ -215,25 +244,37 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
+    justifyContent: 'center',
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 4,
+    marginBottom: Platform.select({
+      ios: 4,
+      android: 2,
+    }),
   },
   title: {
     flex: 1,
     marginRight: 8,
   },
+  timeText: {
+    includeFontPadding: false,
+    textAlign: 'right',
+  },
   description: {
-    marginBottom: 8,
+    marginBottom: Platform.select({
+      ios: 8,
+      android: 6,
+    }),
   },
   typeContainer: {
     alignSelf: 'flex-start',
   },
   typeText: {
     letterSpacing: 0.5,
+    includeFontPadding: false,
   },
   unreadDot: {
     width: 8,
@@ -241,8 +282,14 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#8B5CF6',
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: Platform.select({
+      ios: 16,
+      android: 14,
+    }),
+    right: Platform.select({
+      ios: 16,
+      android: 14,
+    }),
   },
   emptyState: {
     alignItems: 'center',
@@ -253,9 +300,12 @@ const styles = StyleSheet.create({
     fontSize: 64,
     marginBottom: 16,
     opacity: 0.5,
+    includeFontPadding: false,
+    textAlign: 'center',
   },
   emptyTitle: {
     marginBottom: 8,
+    textAlign: 'center',
   },
   emptyDescription: {
     textAlign: 'center',

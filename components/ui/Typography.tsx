@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TextProps } from 'react-native';
+import { Platform, StyleSheet, Text, TextProps } from 'react-native';
 
 export type TypographyVariant = 
   | 'h1' 
@@ -42,45 +42,69 @@ export const Typography: React.FC<TypographyProps> = ({
 const styles = StyleSheet.create({
   base: {
     fontFamily: 'Urbanist_400Regular',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   h1: {
     fontSize: 28,
     fontWeight: 'bold',
     fontFamily: 'Urbanist_700Bold',
-    lineHeight: 36,
+    lineHeight: Platform.select({
+      ios: 36,
+      android: 34,
+    }),
   },
   h2: {
     fontSize: 24,
     fontWeight: 'bold',
     fontFamily: 'Urbanist_700Bold',
-    lineHeight: 32,
+    lineHeight: Platform.select({
+      ios: 32,
+      android: 30,
+    }),
   },
   h3: {
     fontSize: 20,
     fontWeight: 'bold',
     fontFamily: 'Urbanist_700Bold',
-    lineHeight: 28,
+    lineHeight: Platform.select({
+      ios: 28,
+      android: 26,
+    }),
   },
   subtitle: {
     fontSize: 16,
     fontWeight: '600',
     fontFamily: 'Urbanist_600SemiBold',
-    lineHeight: 24,
+    lineHeight: Platform.select({
+      ios: 24,
+      android: 22,
+    }),
   },
   body: {
     fontSize: 16,
     fontFamily: 'Urbanist_400Regular',
-    lineHeight: 24,
+    lineHeight: Platform.select({
+      ios: 24,
+      android: 22,
+    }),
   },
   caption: {
     fontSize: 12,
     fontFamily: 'Urbanist_400Regular',
-    lineHeight: 16,
+    lineHeight: Platform.select({
+      ios: 16,
+      android: 14,
+    }),
   },
   button: {
     fontSize: 16,
     fontWeight: '600',
     fontFamily: 'Urbanist_600SemiBold',
+    lineHeight: Platform.select({
+      ios: 20,
+      android: 18,
+    }),
   },
   overline: {
     fontSize: 12,
@@ -88,5 +112,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Urbanist_500Medium',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    lineHeight: Platform.select({
+      ios: 16,
+      android: 14,
+    }),
   },
 }); 

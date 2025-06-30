@@ -5,13 +5,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const NotificationDetailScreen = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -93,7 +93,7 @@ const NotificationDetailScreen = () => {
 
   if (!notification) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         <View style={styles.errorContainer}>
           <Typography style={styles.errorIcon}>❌</Typography>
@@ -112,7 +112,7 @@ const NotificationDetailScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       {/* Header */}

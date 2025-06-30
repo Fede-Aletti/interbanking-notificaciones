@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, ViewProps } from 'react-native';
+import { Platform, StyleSheet, View, ViewProps } from 'react-native';
 import { Typography } from './Typography';
 
 export interface BadgeProps extends ViewProps {
@@ -38,11 +38,11 @@ export const Badge: React.FC<BadgeProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#FFFFFF',
+    flexDirection: 'row',
   },
   primary: {
     backgroundColor: '#8B5CF6',
@@ -61,20 +61,23 @@ const styles = StyleSheet.create({
   },
   size_small: {
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: Platform.OS === 'android' ? 1 : 2,
     minWidth: 16,
-    height: 16,
     borderRadius: 8,
   },
   size_medium: {
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 24,
-    height: 20,
+    paddingVertical: Platform.OS === 'android' ? 2 : 4,
+    minWidth: 20,
     borderRadius: 10,
   },
   text: {
     fontWeight: 'bold',
-    fontFamily: 'Urbanist_700Bold',
+    textAlign: 'center',
+    includeFontPadding: false, // Android specific
+    textAlignVertical: 'center', // Android specific
+    ...(Platform.OS === 'android' && {
+      lineHeight: undefined, // Let Android handle line height naturally
+    }),
   },
 }); 

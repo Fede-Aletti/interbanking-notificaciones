@@ -5,12 +5,13 @@ import { NotificationType, notificationColors, notificationIcons } from '@/types
 import React from 'react';
 import {
   Alert,
-  SafeAreaView,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const SimulatorScreen = () => {
   const { simulateNotification, scheduleNotification } = useNotifications();
@@ -142,7 +143,7 @@ const SimulatorScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       <ScrollView 
@@ -235,7 +236,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingBottom: Platform.select({
+      ios: 20, // Menos padding en iOS (tab bar absoluto)
+      android: 90, // Más padding en Android para evitar el tab bar
+    }),
   },
   header: {
     paddingVertical: 20,
