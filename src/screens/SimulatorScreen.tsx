@@ -4,18 +4,24 @@ import { useNotificationStore } from '@/store/useNotificationStore';
 import { NotificationType, notificationColors, notificationIcons } from '@/types/notifications';
 import React from 'react';
 import {
-  Alert,
-  Platform,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  View,
+    Alert,
+    Platform,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SimulatorScreen = () => {
   const { simulateNotification, scheduleNotification } = useNotifications();
-  const { clearAllNotifications, markAllAsRead, notifications, unreadCount } = useNotificationStore();
+  const { 
+    clearAllNotifications, 
+    markAllAsRead, 
+    notifications, 
+    unreadCount,
+    simulateServerNotification 
+  } = useNotificationStore();
   const insets = useSafeAreaInsets();
 
   const notificationTypes: Array<{
@@ -53,8 +59,17 @@ const SimulatorScreen = () => {
   const handleSimulatePress = (type: NotificationType) => {
     simulateNotification(type);
     Alert.alert(
-      'Notificación Enviada',
-      `Se ha agregado una notificación de tipo ${type} al inbox`,
+      'Notificación Push Enviada',
+      `Se ha agregado una notificación push de tipo ${type} inmediatamente`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleServerNotificationPress = () => {
+    simulateServerNotification();
+    Alert.alert(
+      'Notificación del Servidor',
+      'Se ha creado una notificación del servidor. Usa pull-to-refresh en la pestaña de Notificaciones para verla.',
       [{ text: 'OK' }]
     );
   };
@@ -65,11 +80,11 @@ const SimulatorScreen = () => {
       `Esta es una notificación programada de tipo ${type}`,
       type,
       'medium',
-      3
+      5
     );
     Alert.alert(
       'Notificación Programada',
-      'Se enviará una notificación en 3 segundos',
+      'Se enviará una notificación en 5 segundos',
       [{ text: 'OK' }]
     );
   };
@@ -130,7 +145,7 @@ const SimulatorScreen = () => {
           style={styles.actionButton}
           onPress={() => handleSimulatePress(item.type)}
         >
-          Simular Inmediato
+          Push Inmediato
         </Button>
         
         <Button
@@ -139,7 +154,7 @@ const SimulatorScreen = () => {
           style={styles.actionButton}
           onPress={() => handleSchedulePress(item.type)}
         >
-          Programar (3s)
+          Programar (5s)
         </Button>
       </View>
     </Card>
@@ -204,7 +219,44 @@ const SimulatorScreen = () => {
           <Typography variant="h3" color="#1E293B" style={styles.sectionTitle}>
             Tipos de Notificación
           </Typography>
+          <Typography variant="body" color="#6B7280" style={styles.sectionSubtitle}>
+            Estas aparecen inmediatamente (simula notificaciones push)
+          </Typography>
           {notificationTypes.map(renderNotificationButton)}
+        </View>
+
+        <View style={styles.section}>
+          <Typography variant="h3" color="#1E293B" style={styles.sectionTitle}>
+            Notificaciones del Servidor
+          </Typography>
+          <Typography variant="body" color="#6B7280" style={styles.sectionSubtitle}>
+            Requieren pull-to-refresh para verlas (simula notificaciones del backend)
+          </Typography>
+          
+          <Card style={styles.serverNotificationCard}>
+            <View style={styles.serverNotificationContent}>
+              <View style={styles.serverIconContainer}>
+                <Typography style={styles.serverIcon}>🌐</Typography>
+              </View>
+              <View style={styles.serverTextContainer}>
+                <Typography variant="subtitle" color="#1E293B">
+                  Simular desde Servidor
+                </Typography>
+                <Typography variant="body" color="#6B7280">
+                  Crea notificaciones que requieren pull-to-refresh
+                </Typography>
+              </View>
+            </View>
+            
+            <Button
+              variant="secondary"
+              fullWidth
+              style={styles.serverButton}
+              onPress={handleServerNotificationPress}
+            >
+              📨 Crear Notificación del Servidor
+            </Button>
+          </Card>
         </View>
 
         <View style={styles.section}>
@@ -274,6 +326,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginBottom: 16,
   },
+  sectionSubtitle: {
+    marginBottom: 16,
+    marginTop: -8,
+  },
   buttonContainer: {
     marginBottom: 12,
   },
@@ -304,6 +360,36 @@ const styles = StyleSheet.create({
   },
   globalButton: {
     marginBottom: 12,
+  },
+  // Estilos para notificaciones del servidor
+  serverNotificationCard: {
+    marginBottom: 16,
+  },
+  serverNotificationContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  serverIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F0F9FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  serverIcon: {
+    fontSize: 22,
+    includeFontPadding: false,
+  },
+  serverTextContainer: {
+    flex: 1,
+  },
+  serverButton: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#3B82F6',
+    borderWidth: 1,
   },
 });
 

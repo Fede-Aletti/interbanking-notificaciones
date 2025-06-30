@@ -2,7 +2,8 @@ import { EmptyState } from '@/components/EmptyState';
 import { Badge, Card, Typography } from '@/components/ui';
 import { useNotificationStore } from '@/store/useNotificationStore';
 import { Notification, notificationColors, notificationIcons } from '@/types/notifications';
-import { router } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import {
     FlatList,
@@ -15,23 +16,39 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { RootStackParamList } from '../navigation/types';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 const NotificationsScreen = () => {
-  const { notifications, unreadCount, markAsRead } = useNotificationStore();
+  const navigation = useNavigation<NavigationProp>();
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    hasNewNotificationsAvailable,
+    refreshNotifications,
+    dismissNewNotificationsBanner
+  } = useNotificationStore();
   const [refreshing, setRefreshing] = React.useState(false);
   const insets = useSafeAreaInsets();
 
-  const handleRefresh = React.useCallback(() => {
+  const handleRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
+    try {
+      await refreshNotifications();
+    } catch (error) {
+      console.error('Error refreshing notifications:', error);
+    } finally {
       setRefreshing(false);
-    }, 1000);
-  }, []);
+    }
+  }, [refreshNotifications]);
 
   const handleNotificationPress = async (notification: Notification) => {
     if (!notification.isRead) {
       await markAsRead(notification.id);
     }
-    router.push(`/notification-detail?id=${notification.id}` as any);
+    navigation.navigate('NotificationDetail', { id: notification.id });
   };
 
   const formatTime = (date: Date) => {
@@ -115,18 +132,57 @@ const NotificationsScreen = () => {
     );
   };
 
-  const ListHeader = () => (
-    <View style={styles.header}>
-      <Typography variant="h1" color="#1E293B" style={styles.headerTitle}>
-        Notificaciones
-      </Typography>
-      {unreadCount > 0 && (
-        <View style={styles.headerBadgeContainer}>
-          <Badge variant="danger">
-            {unreadCount}
-          </Badge>
+  const NewNotificationsBanner = () => {
+    if (!hasNewNotificationsAvailable) return null;
+    
+    return (
+      <TouchableOpacity
+        style={styles.newNotificationsBanner}
+        onPress={handleRefresh}
+        activeOpacity={0.8}
+      >
+        <View style={styles.bannerContent}>
+          <View style={styles.bannerIconContainer}>
+            <Typography style={styles.bannerIcon}>📬</Typography>
+          </View>
+          <View style={styles.bannerTextContainer}>
+            <Typography variant="subtitle" color="#1E293B" style={styles.bannerTitle}>
+              Nuevas notificaciones disponibles
+            </Typography>
+            <Typography variant="caption" color="#6B7280" style={styles.bannerSubtitle}>
+              Toca aquí o desliza hacia abajo para ver
+            </Typography>
+          </View>
+          <TouchableOpacity
+            style={styles.bannerCloseButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              dismissNewNotificationsBanner();
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Typography style={styles.bannerCloseIcon}>✕</Typography>
+          </TouchableOpacity>
         </View>
-      )}
+      </TouchableOpacity>
+    );
+  };
+
+  const ListHeader = () => (
+    <View>
+      <View style={styles.header}>
+        <Typography variant="h1" color="#1E293B" style={styles.headerTitle}>
+          Notificaciones
+        </Typography>
+        {unreadCount > 0 && (
+          <View style={styles.headerBadgeContainer}>
+            <Badge variant="danger">
+              {unreadCount}
+            </Badge>
+          </View>
+        )}
+      </View>
+      <NewNotificationsBanner />
     </View>
   );
 
@@ -295,6 +351,72 @@ const styles = StyleSheet.create({
       ios: 16,
       android: 14,
     }),
+  },
+  // Estilos del banner de notificaciones nuevas
+  newNotificationsBanner: {
+    marginHorizontal: 0,
+    marginBottom: 16,
+    borderRadius: 12,
+    backgroundColor: '#EBF5FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#3B82F6',
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  bannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  bannerIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  bannerIcon: {
+    fontSize: 18,
+    includeFontPadding: false,
+  },
+  bannerTextContainer: {
+    flex: 1,
+    marginRight: 8,
+  },
+  bannerTitle: {
+    marginBottom: 2,
+    fontWeight: '600',
+  },
+  bannerSubtitle: {
+    includeFontPadding: false,
+  },
+  bannerCloseButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bannerCloseIcon: {
+    fontSize: 12,
+    color: '#6B7280',
+    includeFontPadding: false,
+    fontWeight: '600',
   },
 });
 

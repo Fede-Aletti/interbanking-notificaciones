@@ -17,12 +17,29 @@ Notifications.setNotificationHandler({
 });
 
 export const useNotifications = () => {
-  const { addNotification, checkForMissedNotifications } = useNotificationStore();
+  const { 
+    addNotification, 
+    addProgrammedNotification, 
+    checkForMissedNotifications,
+    stopAutoChecking,
+    stopAutoNotifications,
+    isLoaded
+  } = useNotificationStore();
   const notificationListener = useRef<Notifications.EventSubscription>(null);
   const responseListener = useRef<Notifications.EventSubscription>(null);
   const appState = useRef(AppState.currentState);
+  const isInitialized = useRef(false);
 
   useEffect(() => {
+    // Evitar múltiples inicializaciones
+    if (isInitialized.current) {
+      console.log('⚠️ Hook ya está inicializado, saltando...');
+      return;
+    }
+    
+    isInitialized.current = true;
+    console.log('🚀 Inicializando hook de notificaciones...');
+    
     registerForPushNotificationsAsync();
 
     // Listener para notificaciones recibidas
@@ -32,14 +49,28 @@ export const useNotifications = () => {
       const { title, body, data } = notification.request.content;
       
       try {
-        await addNotification({
-          title: title || 'Nueva Notificación',
-          description: body || 'Has recibido una nueva notificación',
-          type: (data?.type as NotificationType) || 'system',
-          priority: (data?.priority as 'low' | 'medium' | 'high') || 'medium',
-          data: data || {},
-        });
-        console.log('✅ Notificación agregada al store');
+        // Verificar si es una notificación programada por la data
+        if (data?.isProgrammed) {
+          // Las notificaciones programadas van a pending para requerir pull-to-refresh
+          addProgrammedNotification({
+            title: title || 'Nueva Notificación',
+            description: body || 'Has recibido una nueva notificación',
+            type: (data?.type as NotificationType) || 'system',
+            priority: (data?.priority as 'low' | 'medium' | 'high') || 'medium',
+            data: { ...data, originalTimestamp: Date.now() }, // Preservar timestamp original
+          });
+          console.log('✅ Notificación programada agregada a pending');
+        } else {
+          // Las notificaciones push normales van directo al listado
+          await addNotification({
+            title: title || 'Nueva Notificación',
+            description: body || 'Has recibido una nueva notificación',
+            type: (data?.type as NotificationType) || 'system',
+            priority: (data?.priority as 'low' | 'medium' | 'high') || 'medium',
+            data: data || {},
+          });
+          console.log('✅ Notificación push agregada al store');
+        }
       } catch (error) {
         console.error('❌ Error agregando notificación:', error);
       }
@@ -55,7 +86,10 @@ export const useNotifications = () => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
         console.log('🔄 App volvió al foreground, verificando notificaciones perdidas...');
-        checkForMissedNotifications();
+        // Solo verificar si ya están cargadas las notificaciones
+        if (isLoaded) {
+          checkForMissedNotifications();
+        }
       }
       appState.current = nextAppState;
     };
@@ -63,6 +97,7 @@ export const useNotifications = () => {
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
+      console.log('🧹 Limpiando hook de notificaciones...');
       if (notificationListener.current) {
         Notifications.removeNotificationSubscription(notificationListener.current);
       }
@@ -70,8 +105,14 @@ export const useNotifications = () => {
         Notifications.removeNotificationSubscription(responseListener.current);
       }
       subscription?.remove();
+      
+      // Detener auto-checking al desmontar
+      stopAutoChecking();
+      // Detener notificaciones automáticas
+      stopAutoNotifications();
+      isInitialized.current = false;
     };
-  }, [addNotification, checkForMissedNotifications]);
+  }, []); // Solo dependencias estáticas
 
   const scheduleNotification = async (
     title: string,
@@ -81,11 +122,21 @@ export const useNotifications = () => {
     delaySeconds: number = 1
   ) => {
     try {
+      // Crear identificador único para la notificación programada
+      const uniqueId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      
       const identifier = await Notifications.scheduleNotificationAsync({
         content: {
           title,
           body,
-          data: { type, priority, timestamp: Date.now() },
+          data: { 
+            type, 
+            priority, 
+            timestamp: Date.now(),
+            isProgrammed: true, // Marcar como programada
+            scheduledFor: Date.now() + (delaySeconds * 1000), // Cuando debería llegar
+            identifier: uniqueId // Identificador único para evitar duplicados
+          },
           badge: 1,
         },
         trigger: {
@@ -93,7 +144,7 @@ export const useNotifications = () => {
           seconds: delaySeconds,
         },
       });
-      console.log('⏰ Notificación programada:', identifier);
+      console.log('⏰ Notificación programada:', identifier, 'con ID:', uniqueId);
       return identifier;
     } catch (error) {
       console.error('❌ Error scheduling notification:', error);

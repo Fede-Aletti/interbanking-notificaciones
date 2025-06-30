@@ -1,21 +1,28 @@
 import { Button, Card, Typography } from '@/components/ui';
 import { useNotificationStore } from '@/store/useNotificationStore';
 import { Notification, notificationColors, notificationIcons } from '@/types/notifications';
-import { router, useLocalSearchParams } from 'expo-router';
-import { canGoBack } from 'expo-router/build/global-state/routing';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    Alert,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { RootStackParamList } from '../navigation/types';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type RoutePropType = RouteProp<RootStackParamList, 'NotificationDetail'>;
+
 const NotificationDetailScreen = () => {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<RoutePropType>();
+  const { id } = route.params;
   const { notifications, markAsRead, deleteNotification } = useNotificationStore();
   const [notification, setNotification] = useState<Notification | null>(null);
 
@@ -36,10 +43,10 @@ const NotificationDetailScreen = () => {
   }, [id, notifications, markAsRead]);
 
   const handleGoBack = () => {
-    if (canGoBack()) {
-      router.back();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
     } else {
-      router.replace('/(tabs)/simulator');
+      navigation.navigate('MainTabs');
     }
   };
 
@@ -55,7 +62,7 @@ const NotificationDetailScreen = () => {
           onPress: async () => {
             if (notification) {
               await deleteNotification(notification.id);
-              router.back();
+              navigation.goBack();
             }
           },
         },

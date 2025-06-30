@@ -1,17 +1,16 @@
 import {
-  Urbanist_100Thin,
-  Urbanist_200ExtraLight,
-  Urbanist_300Light,
-  Urbanist_400Regular,
-  Urbanist_500Medium,
-  Urbanist_600SemiBold,
-  Urbanist_700Bold,
-  Urbanist_800ExtraBold,
-  Urbanist_900Black,
+    Urbanist_100Thin,
+    Urbanist_200ExtraLight,
+    Urbanist_300Light,
+    Urbanist_400Regular,
+    Urbanist_500Medium,
+    Urbanist_600SemiBold,
+    Urbanist_700Bold,
+    Urbanist_800ExtraBold,
+    Urbanist_900Black,
 } from '@expo-google-fonts/urbanist';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import 'react-native-reanimated';
@@ -19,9 +18,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useNotifications } from '@/hooks/useNotifications';
+import { AppNavigator } from '@/navigation/AppNavigator';
 import { useNotificationStore } from '@/store/useNotificationStore';
 
-export default function RootLayout() {
+export default function App() {
   const colorScheme = useColorScheme();
   const { loadNotifications } = useNotificationStore();
   
@@ -29,7 +29,7 @@ export default function RootLayout() {
   useNotifications();
   
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require('./assets/fonts/SpaceMono-Regular.ttf'),
     Urbanist_100Thin,
     Urbanist_200ExtraLight,
     Urbanist_300Light,
@@ -56,20 +56,10 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen 
-            name="notification-detail" 
-            options={{ 
-              headerShown: false,
-              presentation: 'modal'
-            }} 
-          />
-          <Stack.Screen name="+not-found" />
-        </Stack>
+      <NavigationContainer theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <AppNavigator />
         <StatusBar style="dark" backgroundColor="#FFFFFF" />
-      </ThemeProvider>
+      </NavigationContainer>
     </SafeAreaProvider>
   );
-}
+} 
