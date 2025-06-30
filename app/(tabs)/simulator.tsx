@@ -82,14 +82,16 @@ const SimulatorScreen = () => {
         { 
           text: 'Eliminar', 
           style: 'destructive',
-          onPress: clearAllNotifications 
+          onPress: async () => {
+            await clearAllNotifications();
+          }
         },
       ]
     );
   };
 
-  const handleMarkAllRead = () => {
-    markAllAsRead();
+  const handleMarkAllRead = async () => {
+    await markAllAsRead();
     Alert.alert(
       'Marcadas como Leídas',
       'Todas las notificaciones han sido marcadas como leídas',

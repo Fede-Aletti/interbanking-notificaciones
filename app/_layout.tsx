@@ -17,6 +17,7 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useInitializeNotifications } from '@/hooks/useInitializeNotifications';
 import { useNotifications } from '@/hooks/useNotifications';
 
 export default function RootLayout() {
@@ -24,6 +25,9 @@ export default function RootLayout() {
   
   // Inicializa el hook de notificaciones en el nivel raíz
   useNotifications();
+  
+  // Inicializa las notificaciones desde AsyncStorage
+  const isNotificationsLoaded = useInitializeNotifications();
   
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -38,7 +42,8 @@ export default function RootLayout() {
     Urbanist_900Black,
   });
 
-  if (!loaded) {
+  // Esperar a que se carguen tanto las fuentes como las notificaciones
+  if (!loaded || !isNotificationsLoaded) {
     return null;
   }
 

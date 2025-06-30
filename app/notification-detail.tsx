@@ -19,15 +19,19 @@ const NotificationDetailScreen = () => {
   const [notification, setNotification] = useState<Notification | null>(null);
 
   useEffect(() => {
-    if (id) {
-      const foundNotification = notifications.find(n => n.id === id);
-      if (foundNotification) {
-        setNotification(foundNotification);
-        if (!foundNotification.isRead) {
-          markAsRead(id);
+    const handleNotificationLoad = async () => {
+      if (id) {
+        const foundNotification = notifications.find(n => n.id === id);
+        if (foundNotification) {
+          setNotification(foundNotification);
+          if (!foundNotification.isRead) {
+            await markAsRead(id);
+          }
         }
       }
-    }
+    };
+    
+    handleNotificationLoad();
   }, [id, notifications, markAsRead]);
 
   const handleGoBack = () => {
@@ -43,9 +47,9 @@ const NotificationDetailScreen = () => {
         {
           text: 'Eliminar',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
             if (notification) {
-              deleteNotification(notification.id);
+              await deleteNotification(notification.id);
               router.back();
             }
           },

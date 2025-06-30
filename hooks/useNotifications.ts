@@ -25,10 +25,10 @@ export const useNotifications = () => {
     registerForPushNotificationsAsync();
 
     // Listener para notificaciones recibidas
-    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+    notificationListener.current = Notifications.addNotificationReceivedListener(async (notification) => {
       const { title, body, data } = notification.request.content;
       
-      addNotification({
+      await addNotification({
         title: title || 'Nueva Notificación',
         description: body || 'Has recibido una nueva notificación',
         type: (data?.type as NotificationType) || 'system',
@@ -75,7 +75,7 @@ export const useNotifications = () => {
     });
   };
 
-  const simulateNotification = (type: NotificationType = 'system') => {
+  const simulateNotification = async (type: NotificationType = 'system') => {
     const mockNotifications = {
       security: {
         title: '🔒 Alerta de Seguridad',
@@ -105,7 +105,7 @@ export const useNotifications = () => {
     };
 
     const notification = mockNotifications[type];
-    addNotification({
+    await addNotification({
       title: notification.title,
       description: notification.body,
       type,

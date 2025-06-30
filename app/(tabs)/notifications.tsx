@@ -25,9 +25,9 @@ const NotificationsScreen = () => {
     }, 1000);
   }, []);
 
-  const handleNotificationPress = (notification: Notification) => {
+  const handleNotificationPress = async (notification: Notification) => {
     if (!notification.isRead) {
-      markAsRead(notification.id);
+      await markAsRead(notification.id);
     }
     router.push(`/notification-detail?id=${notification.id}` as any);
   };
