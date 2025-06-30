@@ -2,6 +2,23 @@
 
 Un sistema completo de notificaciones push desarrollado en React Native que simula un entorno bancario real con diferentes tipos de alertas y funcionalidades avanzadas.
 
+## ⚡ Quick Start
+
+```bash
+# 1. Instalar dependencias
+npm install
+
+# 2. Levantar la app
+npm start
+
+# 3. En la consola, verificar que diga "Using Expo Go"
+#    Si no, presionar 's' para cambiar modo
+
+# 4. Escanear QR con Expo Go app o cámara del móvil
+```
+
+🎯 **¡Listo!** Las notificaciones funcionan perfectamente en Expo Go.
+
 ## ✨ Características Principales
 
 ### 🔔 **Sistema de Notificaciones**
@@ -59,7 +76,7 @@ npm >= 9.0.0
 expo-cli >= 6.0.0
 ```
 
-### **Instalación**
+### **Instalación Rápida**
 ```bash
 # Clonar el repositorio
 git clone [repository-url]
@@ -68,32 +85,51 @@ cd interbanking-notificaciones
 # Instalar dependencias
 npm install
 
-# Ejecutar en desarrollo
+# Levantar la app
 npm start
 ```
 
-### **Ejecución por Plataforma**
+## 🚀 **Cómo Ejecutar la App**
 
-#### **iOS (Simulator)**
+### **Opción 1: Expo Go (Recomendado para Testing Rápido) 📱**
+
+1. **Instala Expo Go** en tu dispositivo móvil
+   - [iOS App Store](https://apps.apple.com/app/expo-go/id982107779)
+   - [Android Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
+
+2. **Ejecuta el servidor**:
+   ```bash
+   npm start
+   ```
+
+3. **Verifica que uses Expo Go**:
+   - La consola debe mostrar: `› Using Expo Go`
+   - Si no, presiona `s` para cambiar a Expo Go
+
+4. **Escanea el QR**:
+   - **iOS**: Abre la cámara y escanea el QR
+   - **Android**: Abre Expo Go y escanea desde la app
+
+✅ **¡Las notificaciones SÍ funcionan en Expo Go!** Aunque aparezca una advertencia de que "no se soportan push notifications", las notificaciones programadas y simuladas funcionan perfectamente.
+
+### **Opción 2: Simuladores/Emuladores 🖥️**
+
+#### **iOS Simulator**
 ```bash
 npm run ios
+# O desde la consola: presiona 'i'
 ```
 
-#### **Android (Emulator/Device)**
+#### **Android Emulator**
 ```bash
 npm run android
+# O desde la consola: presiona 'a'
 ```
 
-### **Testing en Dispositivo Real**
+### **Opción 3: Development Build (Avanzado) 🔧**
 
-#### **Expo Go (Limitado)**
-```bash
-# Escanear QR desde Expo Go
-npm start
-```
-⚠️ **Nota**: Expo Go, en SDK 53+, puede advertir que no se soporta notificaciones push reales.
+Para notificaciones push reales en producción:
 
-#### **Development Build (Recomendado)**
 ```bash
 # Instalar EAS CLI
 npm install -g eas-cli
@@ -101,12 +137,30 @@ npm install -g eas-cli
 # Login en Expo
 eas login
 
-# Crear build de desarrollo
+# Build para Android
 eas build --profile development --platform android
 
-# O para iOS (requiere cuenta de desarrollador)
+# Build para iOS (requiere cuenta Apple Developer)
 eas build --profile development --platform ios
 ```
+
+## 🧪 **Testing de Notificaciones**
+
+### **En Expo Go (iOS/Android)**
+- ✅ Notificaciones programadas funcionan
+- ✅ Notificaciones inmediatas funcionan
+- ✅ Pull-to-refresh funciona
+- ⚠️ Advertencia aparece pero se puede ignorar
+
+### **En Simuladores**
+- ✅ Notificaciones programadas funcionan
+- ✅ Todas las funcionalidades disponibles
+- ⚠️ No hay notificaciones push reales del sistema
+
+### **En Development Build**
+- ✅ Todas las funcionalidades
+- ✅ Notificaciones push reales del sistema
+- ✅ Testing completo de producción
 
 ## 🏗️ Estructura del Proyecto
 
@@ -167,13 +221,39 @@ Light: '#6B7280'     // Captions
 - **Badges**: Color-coded con auto-sizing
 - **Typography**: Sistema consistente con line-height optimizado
 
+## 🔍 **Verificar que Todo Funciona**
+
+### **Logs que Debes Ver**
+Cuando la app se inicia correctamente, verás en la consola:
+```bash
+› Using Expo Go                                    # ✅ Modo correcto
+LOG  🔔 Inicializando notificaciones...           # ✅ Sistema iniciando
+LOG  ✅ Canal de Android configurado               # ✅ Android listo
+WARN ⚠️ Simulador detectado - Las notificaciones...# ⚠️ Normal en simulador
+LOG  📱 Simulando notificación programada en 5s   # ✅ Programada creada
+```
+
+### **Comandos de la Consola**
+- `s` → Cambiar entre Expo Go y Development Build
+- `r` → Recargar la app
+- `i` → Abrir en iOS Simulator
+- `a` → Abrir en Android Emulator
+- `w` → Abrir en navegador web
+
 ### **Testing Workflow**
 
 #### **Flujo de Testing Completo**
-1. **Push Inmediato**: Crear desde simulador → Aparece instantáneamente
-2. **Notificaciones Programadas**: Crear → Esperar 5s → Llega como push
-3. **Servidor**: Crear → Esperar 10s → Banner aparece → Pull-to-refresh
-4. **Background Recovery**: Salir de app → Programar → Volver → Auto-recovery
+1. **Push Inmediato**: Ir a Simulador → "Push Inmediato" → Aparece instantáneamente
+2. **Notificaciones Programadas**: "Programar (5s)" → Esperar 5s → Banner azul aparece
+3. **Servidor**: "Crear Notificación del Servidor" → Pull-to-refresh en Notificaciones
+4. **Background Recovery**: Minimizar app → Programar → Volver → Auto-recovery funciona
+
+#### **¿Cómo Saber si Funcionan las Programadas?**
+1. Ve a la pestaña **"Simulador"**
+2. Presiona **"Programar (5s)"** en cualquier tipo
+3. **Quédate en la app** (no salgas)
+4. Después de 5 segundos → aparece **banner azul** "Nuevas notificaciones disponibles"
+5. Ve a **"Notificaciones"** → **Pull-to-refresh** → la ves en el listado
 
 ## 📱 Funcionalidades por Pantalla
 
