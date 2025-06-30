@@ -111,6 +111,37 @@ export const useNotifications = () => {
       // ID único para evitar duplicados
       const uniqueId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
       
+      // Si estamos en simulador O no tenemos permisos, simular internamente
+      const { status } = await Notifications.getPermissionsAsync();
+      const isSimulatorOrNoPermissions = !Device.isDevice || status !== 'granted';
+      
+      if (isSimulatorOrNoPermissions) {
+        console.log(`📱 Simulando notificación programada en ${delaySeconds}s (${!Device.isDevice ? 'simulador' : 'sin permisos'})`);
+        
+        // Simular la notificación programada usando el flujo correcto
+        setTimeout(() => {
+          addProgrammedNotification({
+            title: `📱 [PROGRAMADA] ${title}`,
+            description: `${body} ${!Device.isDevice ? '(Simulador)' : '(Sin permisos push)'}`,
+            type,
+            priority,
+            data: { 
+              simulated: true, 
+              wasScheduled: true, 
+              originalDelay: delaySeconds,
+              identifier: uniqueId,
+              scheduledFor: Date.now() + (delaySeconds * 1000),
+              isProgrammed: true
+            },
+          });
+        }, delaySeconds * 1000);
+        
+        return `simulated-${uniqueId}`;
+      }
+
+      // Si estamos en dispositivo real con permisos, usar notificaciones reales
+      console.log(`📱 Programando notificación real en ${delaySeconds}s`);
+      
       const identifier = await Notifications.scheduleNotificationAsync({
         content: {
           title,
@@ -130,9 +161,35 @@ export const useNotifications = () => {
           seconds: delaySeconds,
         },
       });
+      
+      console.log(`✅ Notificación programada: ${identifier} en ${delaySeconds}s`);
       return identifier;
     } catch (error) {
-      // Silenciar errores de programación
+      console.error('❌ Error al programar notificación:', error);
+      
+      // Fallback: si falla la programación real, simular internamente
+      const uniqueId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      console.log(`🔄 Fallback: simulando notificación internamente en ${delaySeconds}s`);
+      
+      setTimeout(() => {
+        addProgrammedNotification({
+          title: `📱 [FALLBACK] ${title}`,
+          description: `${body} (Error en programación, simulada internamente)`,
+          type,
+          priority,
+          data: { 
+            simulated: true, 
+            wasScheduled: true, 
+            originalDelay: delaySeconds,
+            identifier: uniqueId,
+            scheduledFor: Date.now() + (delaySeconds * 1000),
+            isProgrammed: true,
+            error: true
+          },
+        });
+      }, delaySeconds * 1000);
+      
+      return `fallback-${uniqueId}`;
     }
   };
 
@@ -188,6 +245,8 @@ export const useNotifications = () => {
 async function registerForPushNotificationsAsync() {
   let token;
 
+  console.log('🔔 Inicializando notificaciones...');
+
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Default',
@@ -195,29 +254,41 @@ async function registerForPushNotificationsAsync() {
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#8B5CF6',
     });
+    console.log('✅ Canal de Android configurado');
   }
 
   if (Device.isDevice) {
+    console.log('📱 Dispositivo físico detectado');
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    console.log(`📋 Estado actual de permisos: ${existingStatus}`);
+    
     let finalStatus = existingStatus;
     
     if (existingStatus !== 'granted') {
+      console.log('❓ Solicitando permisos de notificación...');
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
+      console.log(`📋 Permisos después de solicitar: ${finalStatus}`);
     }
     
     if (finalStatus !== 'granted') {
+      console.error('❌ Permisos de notificación DENEGADOS');
       alert('¡No se pudieron obtener permisos para las notificaciones push!');
       return;
     }
+    
+    console.log('✅ Permisos de notificación CONCEDIDOS');
     
     try {
       token = await Notifications.getExpoPushTokenAsync({
         projectId: '53bf3907-5c46-4a59-9593-e9a2fd059d11',
       });
+      console.log('✅ Token de Expo obtenido exitosamente');
     } catch (error) {
-      // Silenciar errores de token
+      console.error('❌ Error al obtener token de Expo:', error);
     }
+  } else {
+    console.warn('⚠️ Simulador detectado - Las notificaciones push no funcionarán');
   }
 
   return token?.data;
