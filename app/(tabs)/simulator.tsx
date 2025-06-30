@@ -11,11 +11,12 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SimulatorScreen = () => {
   const { simulateNotification, scheduleNotification } = useNotifications();
   const { clearAllNotifications, markAllAsRead, notifications, unreadCount } = useNotificationStore();
+  const insets = useSafeAreaInsets();
 
   const notificationTypes: Array<{
     type: NotificationType;
@@ -150,7 +151,15 @@ const SimulatorScreen = () => {
       
       <ScrollView 
         style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: Platform.select({
+              ios: Math.max(insets.bottom + 80, 100), // Safe area + tab height + extra
+              android: Math.max(insets.bottom + 72, 90), // Safe area + tab height + extra
+            }),
+          }
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
@@ -238,10 +247,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: Platform.select({
-      ios: 20, // Menos padding en iOS (tab bar absoluto)
-      android: 90, // Más padding en Android para evitar el tab bar
-    }),
   },
   header: {
     paddingVertical: 20,

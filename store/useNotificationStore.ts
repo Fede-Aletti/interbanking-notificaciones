@@ -1,8 +1,8 @@
 import { Notification, NotificationStore } from '@/types/notifications';
-import { storageUtils } from '@/utils/storage';
+import * as Notifications from 'expo-notifications';
 import { create } from 'zustand';
 
-// Mock notifications for demo - solo se usan si no hay datos guardados
+// Mock notifications for demo - se cargan siempre al inicializar
 const mockNotifications: Notification[] = [
   {
     id: '1',
@@ -48,61 +48,89 @@ const mockNotifications: Notification[] = [
 
 interface ExtendedNotificationStore extends NotificationStore {
   isLoaded: boolean;
-  loadNotifications: () => Promise<void>;
+  loadNotifications: () => void;
+  checkForMissedNotifications: () => Promise<void>;
 }
 
 export const useNotificationStore = create<ExtendedNotificationStore>((set, get) => {
-  // Función helper para persistir estado actual
-  const persistState = async () => {
-    const state = get();
-    await storageUtils.saveNotifications({
-      notifications: state.notifications,
-      unreadCount: state.unreadCount,
-    });
-  };
-
   return {
     notifications: [],
     unreadCount: 0,
     isLoaded: false,
 
-    // Cargar notificaciones desde AsyncStorage
-    loadNotifications: async () => {
+    // Verificar notificaciones que llegaron en background
+    checkForMissedNotifications: async () => {
       try {
-        const storedData = await storageUtils.loadNotifications();
+        console.log('🔍 Verificando notificaciones presentadas...');
         
-        if (storedData) {
-          // Cargar datos guardados
-          set({
-            notifications: storedData.notifications,
-            unreadCount: storedData.unreadCount,
-            isLoaded: true,
-          });
-        } else {
-          // Primera vez - usar datos mock y guardarlos
-          const unreadCount = mockNotifications.filter(n => !n.isRead).length;
-          set({
-            notifications: mockNotifications,
-            unreadCount,
-            isLoaded: true,
-          });
+        // Obtener notificaciones que están actualmente en la bandeja de notificaciones
+        const presentedNotifications = await Notifications.getPresentedNotificationsAsync();
+        
+        if (presentedNotifications.length > 0) {
+          console.log(`📥 Encontradas ${presentedNotifications.length} notificaciones presentadas`);
           
-          // Guardar los datos mock para la próxima vez
-          await storageUtils.saveNotifications({
-            notifications: mockNotifications,
-            unreadCount,
-          });
+          const currentState = get();
+          let addedCount = 0;
+          
+          for (const notification of presentedNotifications) {
+            const { title, body, data } = notification.request.content;
+            
+            // Verificar si ya existe en nuestro store para evitar duplicados
+            const exists = currentState.notifications.some(n => 
+              n.title === title && 
+              Math.abs(n.timestamp.getTime() - notification.date) < 10000 // 10 segundos de diferencia
+            );
+            
+            if (!exists) {
+              console.log('➕ Agregando notificación perdida:', title);
+              
+              const newNotification: Notification = {
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                title: title || 'Nueva Notificación',
+                description: body || 'Has recibido una nueva notificación',
+                type: (data?.type as any) || 'system',
+                priority: (data?.priority as any) || 'medium',
+                timestamp: new Date(notification.date),
+                isRead: false,
+                data: data || {},
+              };
+
+              // Agregar al estado
+              set((state) => ({
+                notifications: [newNotification, ...state.notifications],
+                unreadCount: state.unreadCount + 1,
+              }));
+              
+              addedCount++;
+            }
+          }
+          
+          if (addedCount > 0) {
+            console.log(`✅ Se agregaron ${addedCount} notificaciones perdidas`);
+          }
         }
+        
       } catch (error) {
-        console.error('Error loading notifications:', error);
-        // Fallback a datos mock en caso de error
-        const unreadCount = mockNotifications.filter(n => !n.isRead).length;
-        set({
-          notifications: mockNotifications,
-          unreadCount,
-          isLoaded: true,
-        });
+        console.error('❌ Error checking missed notifications:', error);
       }
+    },
+
+    // Cargar notificaciones (ahora solo datos mock)
+    loadNotifications: () => {
+      console.log('🔄 Cargando notificaciones mock...');
+      const unreadCount = mockNotifications.filter(n => !n.isRead).length;
+      
+      set({
+        notifications: mockNotifications,
+        unreadCount,
+        isLoaded: true,
+      });
+      
+      console.log('✅ Notificaciones mock cargadas:', mockNotifications.length);
+      
+      // Después de cargar, verificar notificaciones perdidas
+      const checkMissed = get().checkForMissedNotifications;
+      checkMissed();
     },
 
     addNotification: async (notification) => {
@@ -118,8 +146,7 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
         unreadCount: state.unreadCount + 1,
       }));
 
-      // Persistir cambios
-      await persistState();
+      console.log('✅ Notificación agregada:', newNotification.title);
     },
 
     markAsRead: async (id) => {
@@ -138,8 +165,7 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
         };
       });
 
-      // Persistir cambios
-      await persistState();
+      console.log('📖 Notificación marcada como leída:', id);
     },
 
     markAllAsRead: async () => {
@@ -151,8 +177,7 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
         unreadCount: 0,
       }));
 
-      // Persistir cambios
-      await persistState();
+      console.log('📖 Todas las notificaciones marcadas como leídas');
     },
 
     deleteNotification: async (id) => {
@@ -168,8 +193,7 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
         };
       });
 
-      // Persistir cambios
-      await persistState();
+      console.log('🗑️ Notificación eliminada:', id);
     },
 
     clearAllNotifications: async () => {
@@ -178,8 +202,7 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
         unreadCount: 0,
       });
 
-      // Limpiar AsyncStorage completamente
-      await storageUtils.clearNotifications();
+      console.log('🧹 Todas las notificaciones limpiadas');
     },
   };
 }); 

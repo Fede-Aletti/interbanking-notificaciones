@@ -2,6 +2,7 @@ import { Button, Card, Typography } from '@/components/ui';
 import { useNotificationStore } from '@/store/useNotificationStore';
 import { Notification, notificationColors, notificationIcons } from '@/types/notifications';
 import { router, useLocalSearchParams } from 'expo-router';
+import { canGoBack } from 'expo-router/build/global-state/routing';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -35,7 +36,11 @@ const NotificationDetailScreen = () => {
   }, [id, notifications, markAsRead]);
 
   const handleGoBack = () => {
-    router.back();
+    if (canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/simulator');
+    }
   };
 
   const handleDelete = () => {

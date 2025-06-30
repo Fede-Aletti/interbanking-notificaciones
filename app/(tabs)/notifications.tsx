@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/EmptyState';
 import { Badge, Card, Typography } from '@/components/ui';
 import { useNotificationStore } from '@/store/useNotificationStore';
 import { Notification, notificationColors, notificationIcons } from '@/types/notifications';
@@ -10,13 +11,14 @@ import {
     StatusBar,
     StyleSheet,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const NotificationsScreen = () => {
   const { notifications, unreadCount, markAsRead } = useNotificationStore();
   const [refreshing, setRefreshing] = React.useState(false);
+  const insets = useSafeAreaInsets();
 
   const handleRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -128,16 +130,14 @@ const NotificationsScreen = () => {
     </View>
   );
 
-  const EmptyState = () => (
-    <View style={styles.emptyState}>
-      <Typography style={styles.emptyIcon}>🔔</Typography>
-      <Typography variant="h3" color="#374151" style={styles.emptyTitle}>
-        No hay notificaciones
-      </Typography>
-      <Typography variant="body" color="#6B7280" style={styles.emptyDescription}>
-        Cuando recibas notificaciones aparecerán aquí
-      </Typography>
-    </View>
+  const ListEmptyComponent = () => (
+    <EmptyState
+      icon="📱"
+      title="No hay notificaciones"
+      description="Cuando recibas notificaciones aparecerán aquí.
+Usa el simulador para crear algunas de prueba."
+      hint="💡 Ve a la pestaña 'Simulador' para generar notificaciones"
+    />
   );
 
   return (
@@ -149,7 +149,7 @@ const NotificationsScreen = () => {
         renderItem={renderNotificationItem}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={ListHeader}
-        ListEmptyComponent={EmptyState}
+        ListEmptyComponent={ListEmptyComponent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -162,7 +162,12 @@ const NotificationsScreen = () => {
         contentContainerStyle={[
           styles.listContainer,
           notifications.length === 0 && styles.listContainerEmpty,
-          Platform.OS === 'android' && { paddingBottom: 90 }
+          {
+            paddingBottom: Platform.select({
+              ios: Math.max(insets.bottom + 80, 100), // Safe area + tab height + extra
+              android: Math.max(insets.bottom + 72, 90), // Safe area + tab height + extra
+            }),
+          }
         ]}
       />
     </SafeAreaView>
@@ -290,25 +295,6 @@ const styles = StyleSheet.create({
       ios: 16,
       android: 14,
     }),
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-    opacity: 0.5,
-    includeFontPadding: false,
-    textAlign: 'center',
-  },
-  emptyTitle: {
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyDescription: {
-    textAlign: 'center',
   },
 });
 

@@ -3,7 +3,7 @@ import { NotificationType } from '@/types/notifications';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { AppState, AppStateStatus, Platform } from 'react-native';
 
 // Configurar el comportamiento de las notificaciones
 Notifications.setNotificationHandler({
@@ -17,32 +17,50 @@ Notifications.setNotificationHandler({
 });
 
 export const useNotifications = () => {
-  const { addNotification } = useNotificationStore();
-  const notificationListener = useRef<Notifications.Subscription>();
-  const responseListener = useRef<Notifications.Subscription>();
+  const { addNotification, checkForMissedNotifications } = useNotificationStore();
+  const notificationListener = useRef<Notifications.EventSubscription>(null);
+  const responseListener = useRef<Notifications.EventSubscription>(null);
+  const appState = useRef(AppState.currentState);
 
   useEffect(() => {
     registerForPushNotificationsAsync();
 
     // Listener para notificaciones recibidas
     notificationListener.current = Notifications.addNotificationReceivedListener(async (notification) => {
+      console.log('📱 Notificación recibida:', notification.request.content.title);
+      
       const { title, body, data } = notification.request.content;
       
-      await addNotification({
-        title: title || 'Nueva Notificación',
-        description: body || 'Has recibido una nueva notificación',
-        type: (data?.type as NotificationType) || 'system',
-        priority: (data?.priority as 'low' | 'medium' | 'high') || 'medium',
-        data: data || {},
-      });
+      try {
+        await addNotification({
+          title: title || 'Nueva Notificación',
+          description: body || 'Has recibido una nueva notificación',
+          type: (data?.type as NotificationType) || 'system',
+          priority: (data?.priority as 'low' | 'medium' | 'high') || 'medium',
+          data: data || {},
+        });
+        console.log('✅ Notificación agregada al store');
+      } catch (error) {
+        console.error('❌ Error agregando notificación:', error);
+      }
     });
 
     // Listener para respuestas a notificaciones
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       const notificationData = response.notification.request.content.data;
-      // Aquí podríamos navegar a una pantalla específica basada en los datos
-      console.log('Notification response:', notificationData);
+      console.log('👆 Notification response:', notificationData);
     });
+
+    // Listener para cambios de estado de la app
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        console.log('🔄 App volvió al foreground, verificando notificaciones perdidas...');
+        checkForMissedNotifications();
+      }
+      appState.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
       if (notificationListener.current) {
@@ -51,8 +69,9 @@ export const useNotifications = () => {
       if (responseListener.current) {
         Notifications.removeNotificationSubscription(responseListener.current);
       }
+      subscription?.remove();
     };
-  }, [addNotification]);
+  }, [addNotification, checkForMissedNotifications]);
 
   const scheduleNotification = async (
     title: string,
@@ -61,18 +80,24 @@ export const useNotifications = () => {
     priority: 'low' | 'medium' | 'high' = 'medium',
     delaySeconds: number = 1
   ) => {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title,
-        body,
-        data: { type, priority },
-        badge: 1,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: delaySeconds,
-      },
-    });
+    try {
+      const identifier = await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data: { type, priority, timestamp: Date.now() },
+          badge: 1,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: delaySeconds,
+        },
+      });
+      console.log('⏰ Notificación programada:', identifier);
+      return identifier;
+    } catch (error) {
+      console.error('❌ Error scheduling notification:', error);
+    }
   };
 
   const simulateNotification = async (type: NotificationType = 'system') => {
@@ -105,13 +130,18 @@ export const useNotifications = () => {
     };
 
     const notification = mockNotifications[type];
-    await addNotification({
-      title: notification.title,
-      description: notification.body,
-      type,
-      priority: notification.priority,
-      data: { simulated: true },
-    });
+    try {
+      await addNotification({
+        title: notification.title,
+        description: notification.body,
+        type,
+        priority: notification.priority,
+        data: { simulated: true, timestamp: Date.now() },
+      });
+      console.log('✅ Notificación simulada agregada');
+    } catch (error) {
+      console.error('❌ Error simulating notification:', error);
+    }
   };
 
   return {
@@ -148,14 +178,14 @@ async function registerForPushNotificationsAsync() {
     
     try {
       token = await Notifications.getExpoPushTokenAsync({
-        projectId: '671a0e65-fb17-4c5e-9aad-6e5d26b87e4c', // Esto debería ser tu project ID real
+        projectId: '53bf3907-5c46-4a59-9593-e9a2fd059d11', // Usar el projectId correcto del app.json
       });
-      console.log('Expo Push Token:', token);
+      console.log('📱 Expo Push Token:', token?.data);
     } catch (error) {
-      console.log('Error getting push token:', error);
+      console.log('❌ Error getting push token:', error);
     }
   } else {
-    console.log('Debe usar un dispositivo físico para las notificaciones push');
+    console.log('⚠️ Debe usar un dispositivo físico para las notificaciones push');
   }
 
   return token?.data;
