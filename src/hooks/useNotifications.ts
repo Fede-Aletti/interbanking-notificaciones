@@ -108,30 +108,39 @@ export const useNotifications = () => {
     delaySeconds: number = 1
   ) => {
     try {
-      const { status } = await Notifications.getPermissionsAsync();
-      if (status !== 'granted') {
-        console.warn('⚠️ Permisos de notificación no concedidos');
-        return null;
-      }
-
-      // Verificar si estamos en simulador
-      if (!Device.isDevice) {
-        console.warn('⚠️ Las notificaciones no funcionan en el simulador. Usa un dispositivo físico.');
-        // Simular la notificación como inmediata para testing
-        setTimeout(async () => {
-          await addNotification({
-            title: `📱 [SIMULADO] ${title}`,
-            description: `${body} (Esta notificación fue simulada porque estás en el simulador)`,
-            type,
-            priority,
-            data: { simulated: true, wasScheduled: true, originalDelay: delaySeconds },
-          });
-        }, delaySeconds * 1000);
-        return `simulated-${Date.now()}`;
-      }
-
       // ID único para evitar duplicados
       const uniqueId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      
+      // Si estamos en simulador O no tenemos permisos, simular internamente
+      const { status } = await Notifications.getPermissionsAsync();
+      const isSimulatorOrNoPermissions = !Device.isDevice || status !== 'granted';
+      
+      if (isSimulatorOrNoPermissions) {
+        console.log(`📱 Simulando notificación programada en ${delaySeconds}s (${!Device.isDevice ? 'simulador' : 'sin permisos'})`);
+        
+        // Simular la notificación programada usando el flujo correcto
+        setTimeout(() => {
+          addProgrammedNotification({
+            title: `📱 [PROGRAMADA] ${title}`,
+            description: `${body} ${!Device.isDevice ? '(Simulador)' : '(Sin permisos push)'}`,
+            type,
+            priority,
+            data: { 
+              simulated: true, 
+              wasScheduled: true, 
+              originalDelay: delaySeconds,
+              identifier: uniqueId,
+              scheduledFor: Date.now() + (delaySeconds * 1000),
+              isProgrammed: true
+            },
+          });
+        }, delaySeconds * 1000);
+        
+        return `simulated-${uniqueId}`;
+      }
+
+      // Si estamos en dispositivo real con permisos, usar notificaciones reales
+      console.log(`📱 Programando notificación real en ${delaySeconds}s`);
       
       const identifier = await Notifications.scheduleNotificationAsync({
         content: {
@@ -157,7 +166,30 @@ export const useNotifications = () => {
       return identifier;
     } catch (error) {
       console.error('❌ Error al programar notificación:', error);
-      return null;
+      
+      // Fallback: si falla la programación real, simular internamente
+      const uniqueId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+      console.log(`🔄 Fallback: simulando notificación internamente en ${delaySeconds}s`);
+      
+      setTimeout(() => {
+        addProgrammedNotification({
+          title: `📱 [FALLBACK] ${title}`,
+          description: `${body} (Error en programación, simulada internamente)`,
+          type,
+          priority,
+          data: { 
+            simulated: true, 
+            wasScheduled: true, 
+            originalDelay: delaySeconds,
+            identifier: uniqueId,
+            scheduledFor: Date.now() + (delaySeconds * 1000),
+            isProgrammed: true,
+            error: true
+          },
+        });
+      }, delaySeconds * 1000);
+      
+      return `fallback-${uniqueId}`;
     }
   };
 
