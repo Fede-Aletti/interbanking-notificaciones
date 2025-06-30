@@ -108,6 +108,28 @@ export const useNotifications = () => {
     delaySeconds: number = 1
   ) => {
     try {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        console.warn('⚠️ Permisos de notificación no concedidos');
+        return null;
+      }
+
+      // Verificar si estamos en simulador
+      if (!Device.isDevice) {
+        console.warn('⚠️ Las notificaciones no funcionan en el simulador. Usa un dispositivo físico.');
+        // Simular la notificación como inmediata para testing
+        setTimeout(async () => {
+          await addNotification({
+            title: `📱 [SIMULADO] ${title}`,
+            description: `${body} (Esta notificación fue simulada porque estás en el simulador)`,
+            type,
+            priority,
+            data: { simulated: true, wasScheduled: true, originalDelay: delaySeconds },
+          });
+        }, delaySeconds * 1000);
+        return `simulated-${Date.now()}`;
+      }
+
       // ID único para evitar duplicados
       const uniqueId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
       
@@ -130,9 +152,12 @@ export const useNotifications = () => {
           seconds: delaySeconds,
         },
       });
+      
+      console.log(`✅ Notificación programada: ${identifier} en ${delaySeconds}s`);
       return identifier;
     } catch (error) {
-      // Silenciar errores de programación
+      console.error('❌ Error al programar notificación:', error);
+      return null;
     }
   };
 
@@ -188,6 +213,8 @@ export const useNotifications = () => {
 async function registerForPushNotificationsAsync() {
   let token;
 
+  console.log('🔔 Inicializando notificaciones...');
+
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Default',
@@ -195,29 +222,41 @@ async function registerForPushNotificationsAsync() {
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#8B5CF6',
     });
+    console.log('✅ Canal de Android configurado');
   }
 
   if (Device.isDevice) {
+    console.log('📱 Dispositivo físico detectado');
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    console.log(`📋 Estado actual de permisos: ${existingStatus}`);
+    
     let finalStatus = existingStatus;
     
     if (existingStatus !== 'granted') {
+      console.log('❓ Solicitando permisos de notificación...');
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
+      console.log(`📋 Permisos después de solicitar: ${finalStatus}`);
     }
     
     if (finalStatus !== 'granted') {
+      console.error('❌ Permisos de notificación DENEGADOS');
       alert('¡No se pudieron obtener permisos para las notificaciones push!');
       return;
     }
+    
+    console.log('✅ Permisos de notificación CONCEDIDOS');
     
     try {
       token = await Notifications.getExpoPushTokenAsync({
         projectId: '53bf3907-5c46-4a59-9593-e9a2fd059d11',
       });
+      console.log('✅ Token de Expo obtenido exitosamente');
     } catch (error) {
-      // Silenciar errores de token
+      console.error('❌ Error al obtener token de Expo:', error);
     }
+  } else {
+    console.warn('⚠️ Simulador detectado - Las notificaciones push no funcionarán');
   }
 
   return token?.data;
