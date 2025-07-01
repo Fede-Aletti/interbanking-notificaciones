@@ -81,7 +81,7 @@ expo-cli >= 6.0.0
 ### **Instalación Rápida**
 ```bash
 # Clonar el repositorio
-git clone [repository-url]
+git clone https://github.com/Fede-Aletti/interbanking-notificaciones.git
 cd interbanking-notificaciones
 
 # Instalar dependencias
