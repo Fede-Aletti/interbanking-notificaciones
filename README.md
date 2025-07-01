@@ -2,6 +2,8 @@
 
 Un sistema completo de notificaciones push desarrollado en React Native que simula un entorno bancario real con diferentes tipos de alertas y funcionalidades avanzadas.
 
+![Showcase](./assets/showcase-gif.gif)
+
 ## ⚡ Quick Start
 
 ```bash
