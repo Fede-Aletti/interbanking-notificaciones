@@ -6,7 +6,7 @@ import { create } from 'zustand';
 const mockNotifications: Notification[] = [
   {
     id: '1',
-    title: '🔒 Alerta de Seguridad',
+    title: 'Alerta de Seguridad',
     description: 'Se detectó un acceso desde un nuevo dispositivo en Buenos Aires. Si no fuiste tú, revisa tu cuenta inmediatamente.',
     type: 'security',
     timestamp: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
@@ -16,7 +16,7 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '2',
-    title: '💳 Transferencia Realizada',
+    title: 'Transferencia Realizada',
     description: 'Se procesó exitosamente tu transferencia por $45,000 ARS a María García.',
     type: 'transaction',
     timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
@@ -26,7 +26,7 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '3',
-    title: '🎉 Nueva Promoción',
+    title: 'Nueva Promoción',
     description: '¡Obtén hasta 5% de descuento en todas tus transferencias durante enero!',
     type: 'promotion',
     timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
@@ -36,7 +36,7 @@ const mockNotifications: Notification[] = [
   },
   {
     id: '4',
-    title: '⚙️ Mantenimiento Programado',
+    title: 'Mantenimiento Programado',
     description: 'El sistema estará en mantenimiento el domingo 14/01 de 2:00 a 4:00 AM.',
     type: 'system',
     timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
@@ -345,27 +345,27 @@ export const useNotificationStore = create<ExtendedNotificationStore>((set, get)
       
       const notificationTemplates = {
         security: {
-          title: '🔒 Alerta del Servidor',
+          title: 'Alerta del Servidor',
           description: 'Nueva alerta de seguridad detectada desde el servidor.',
           priority: 'high' as const,
         },
         transaction: {
-          title: '💳 Transacción del Servidor',
+          title: 'Transacción del Servidor',
           description: `Nueva transacción procesada: $${(Math.random() * 50000 + 5000).toFixed(0)} ARS.`,
           priority: 'medium' as const,
         },
         promotion: {
-          title: '🎉 Promoción del Servidor',
+          title: 'Promoción del Servidor',
           description: 'Nueva oferta especial disponible desde el servidor.',
           priority: 'medium' as const,
         },
         system: {
-          title: '⚙️ Actualización del Servidor',
+          title: 'Actualización del Servidor',
           description: 'Nueva actualización del sistema disponible.',
           priority: 'low' as const,
         },
         urgent: {
-          title: '🚨 Urgente del Servidor',
+          title: 'Urgente del Servidor',
           description: 'Notificación urgente que requiere atención inmediata.',
           priority: 'high' as const,
         },

@@ -21,6 +21,14 @@ export interface NotificationStore {
   clearAllNotifications: () => Promise<void>;
 }
 
+export const notificationLabels: Record<NotificationType, string> = {
+  security: 'SEGURIDAD',
+  transaction: 'TRANSACCIÓN',
+  system: 'SISTEMA',
+  promotion: 'PROMOCIÓN',
+  urgent: 'URGENTE',
+};
+
 export const notificationIcons: Record<NotificationType, string> = {
   security: '🔒',
   transaction: '💳',

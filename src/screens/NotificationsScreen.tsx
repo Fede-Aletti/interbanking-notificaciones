@@ -1,7 +1,7 @@
 import { EmptyState } from '@/components/EmptyState';
 import { Badge, Card, Typography } from '@/components/ui';
 import { useNotificationStore } from '@/store/useNotificationStore';
-import { Notification, notificationColors, notificationIcons } from '@/types/notifications';
+import { Notification, notificationColors, notificationIcons, notificationLabels } from '@/types/notifications';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
@@ -112,13 +112,16 @@ const NotificationsScreen = () => {
                 {item.description}
               </Typography>
               
-              <View style={styles.typeContainer}>
+              <View style={[
+                styles.typeContainer,
+                { backgroundColor: notificationColors[item.type] }
+              ]}>
                 <Typography
                   variant="overline"
-                  color={notificationColors[item.type]}
+                  color="#FFFFFF"
                   style={styles.typeText}
                 >
-                  {item.type.toUpperCase()}
+                  {notificationLabels[item.type]}
                 </Typography>
               </View>
             </View>
@@ -332,10 +335,16 @@ const styles = StyleSheet.create({
   },
   typeContainer: {
     alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#6B7280', // Fallback color, will be overridden
   },
   typeText: {
     letterSpacing: 0.5,
     includeFontPadding: false,
+    fontSize: 10,
+    fontWeight: '600',
   },
   unreadDot: {
     width: 8,

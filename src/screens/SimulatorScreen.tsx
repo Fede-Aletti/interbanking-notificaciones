@@ -76,7 +76,7 @@ const SimulatorScreen = () => {
 
   const handleSchedulePress = (type: NotificationType) => {
     scheduleNotification(
-      `📱 Notificación Programada - ${type.toUpperCase()}`,
+      `${type.toUpperCase()}`,
       `Esta es una notificación programada de tipo ${type}`,
       type,
       'medium',

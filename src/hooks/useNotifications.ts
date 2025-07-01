@@ -121,7 +121,7 @@ export const useNotifications = () => {
         // Simular la notificación programada usando el flujo correcto
         setTimeout(() => {
           addProgrammedNotification({
-            title: `📱 [PROGRAMADA] ${title}`,
+            title: `${title}`,
             description: `${body} ${!Device.isDevice ? '(Simulador)' : '(Sin permisos push)'}`,
             type,
             priority,
@@ -196,27 +196,27 @@ export const useNotifications = () => {
   const simulateNotification = async (type: NotificationType = 'system') => {
     const mockNotifications = {
       security: {
-        title: '🔒 Alerta de Seguridad',
+        title: 'Alerta de Seguridad',
         body: 'Acceso detectado desde un nuevo dispositivo. Verifica tu cuenta.',
         priority: 'high' as const,
       },
       transaction: {
-        title: '💳 Transacción Realizada',
+        title: 'Transacción Realizada',
         body: 'Se ha procesado una transferencia por $15,000 ARS.',
         priority: 'medium' as const,
       },
       system: {
-        title: '⚙️ Mantenimiento Programado',
+        title: 'Mantenimiento Programado',
         body: 'El sistema estará en mantenimiento el domingo de 2:00 a 4:00 AM.',
         priority: 'low' as const,
       },
       promotion: {
-        title: '🎉 Nueva Promoción',
+        title: 'Nueva Promoción',
         body: '¡Obtén hasta 3% de descuento en todas tus transferencias!',
         priority: 'medium' as const,
       },
       urgent: {
-        title: '🚨 Acción Requerida',
+        title: 'Acción Requerida',
         body: 'Tu sesión expirará en 5 minutos. Confirma tu identidad.',
         priority: 'high' as const,
       },
